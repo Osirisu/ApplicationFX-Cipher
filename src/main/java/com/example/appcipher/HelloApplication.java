@@ -18,8 +18,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-
 public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) {
@@ -31,11 +29,9 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
         stage.show();
     }
-
     public static void main(String[] args) {
         launch();
     }
-
     private GridPane createRegistrationFormPane() {
         GridPane gridPane = new GridPane();
 
@@ -106,12 +102,16 @@ public class HelloApplication extends Application {
         GridPane.setHalignment(crypt, HPos.CENTER);
 
         crypt.setOnAction(actionEvent -> {
-            RadioButton language = (RadioButton) groupLanguage.getSelectedToggle();
-            RadioButton operation = (RadioButton) groupCrypt.getSelectedToggle();
-
+            String txt = textField.getText();
             String result = "";
 
-            String txt = textField.getText();
+            if (txt.equals("")) {
+                textResult.setText("");
+                return;
+            }
+
+            RadioButton language = (RadioButton) groupLanguage.getSelectedToggle();
+            RadioButton operation = (RadioButton) groupCrypt.getSelectedToggle();
 
             txt = txt.replace("ё","ѐ");
             txt = txt.replace("Ё","ѐ");
