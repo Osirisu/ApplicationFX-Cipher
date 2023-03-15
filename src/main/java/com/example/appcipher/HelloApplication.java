@@ -25,8 +25,7 @@ public class HelloApplication extends Application {
         createUIControls(gridPane);
 
         Scene scene = new Scene(gridPane, 800, 420);
-        stage.setMaxHeight(420);
-        stage.setMaxWidth(800);
+        stage.setResizable(false);
 
         stage.setTitle("Cipher");
         stage.setScene(scene);
