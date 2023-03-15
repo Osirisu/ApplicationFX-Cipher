@@ -26,11 +26,12 @@ public class HelloApplication extends Application {
     private Stage javaFXC;
     private String inputFilePath;
     private String outputFilePath;
+
+    public static void main(String[] args) {
+        launch();
+    }
     @Override
     public void start(Stage stage) {
-        inputFilePath = "/home/mirael/IdeaProjects/appCipher/src/main/java/com/example/appcipher/input.txt";
-        outputFilePath = "/home/mirael/IdeaProjects/appCipher/src/main/java/com/example/appcipher/output.txt";
-
         GridPane gridPane = createRegistrationFormPane();
         createUIControls(gridPane);
 
@@ -40,11 +41,12 @@ public class HelloApplication extends Application {
         stage.setTitle("Cipher");
         stage.setScene(scene);
         stage.show();
+
+        inputFilePath = "/home/mirael/IdeaProjects/appCipher/src/main/java/com/example/appcipher/input.txt";
+        outputFilePath = "/home/mirael/IdeaProjects/appCipher/src/main/java/com/example/appcipher/output.txt";
         javaFXC = stage;
     }
-    public static void main(String[] args) {
-        launch();
-    }
+
     private GridPane createRegistrationFormPane() {
         GridPane gridPane = new GridPane();
 
@@ -196,9 +198,11 @@ public class HelloApplication extends Application {
         fileChooser.getExtensionFilters().add(filter);
         File file = fileChooser.showOpenDialog(javaFXC);
 
-        return file.getPath();
+        if (file != null)
+            return file.getPath();
+        else
+            return inputFilePath;
     }
-
     private void inputText(String path, String text){
         if (path.isEmpty())
             path = outputFilePath;
