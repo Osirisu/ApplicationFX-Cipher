@@ -8,12 +8,10 @@ import Cipher.Cipher.TrithemiusCipher;
 import javafx.application.Application;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.text.Font;
@@ -22,7 +20,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public class HelloApplication extends Application {
     private Stage javaFXC;
@@ -44,8 +44,8 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
         stage.show();
 
-        inputFilePath = "/home/mirael/IdeaProjects/appCipher/src/main/java/com/example/appcipher/input.txt";
-        outputFilePath = "/home/mirael/IdeaProjects/appCipher/src/main/java/com/example/appcipher/output.txt";
+        inputFilePath = Objects.requireNonNull(getClass().getResource("input.txt")).getPath();
+        outputFilePath = Objects.requireNonNull(getClass().getResource("output.txt")).getPath();
         javaFXC = stage;
     }
 
@@ -195,7 +195,7 @@ public class HelloApplication extends Application {
         });
     }
 
-    private String getPath(){
+    protected String getPath(){
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Выбрать текст");
         FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Текст", "*.txt");
@@ -232,7 +232,6 @@ public class HelloApplication extends Application {
 
             while (line != null) {
                 text.append(line).append("\n");
-                // считываем остальные строки в цикле
                 line = reader.readLine();
             }
             return text.toString().strip();
