@@ -8,10 +8,12 @@ import Cipher.Cipher.TrithemiusCipher;
 import javafx.application.Application;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.text.Font;
@@ -107,12 +109,14 @@ public class HelloApplication extends Application {
         gridPane.add(checkOutputFile, 0,4);
 
         Button openOutputFile = new Button("Выбрать файл");
+        openOutputFile.setTooltip(new Tooltip("Выберите файл из которого\nнадо достать текст"));
         gridPane.add(openOutputFile, 1,4);
 
         CheckBox checkInputFile = new CheckBox("В файл");
         gridPane.add(checkInputFile, 2,4);
 
         Button openInputFile = new Button("В файл");
+        openInputFile.setTooltip(new Tooltip("Выберите файл в который\nнадо записать результат операции"));
         gridPane.add(openInputFile, 3, 4);
         //
         Label resultText = new Label("Результат");
@@ -231,7 +235,7 @@ public class HelloApplication extends Application {
                 // считываем остальные строки в цикле
                 line = reader.readLine();
             }
-            return text.toString().replace("\n"," ");
+            return text.toString().strip();
         } catch (IOException e) {
             e.printStackTrace();
             return "";
