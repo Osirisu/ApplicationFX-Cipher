@@ -151,7 +151,6 @@ public class HelloApplication extends Application {
                     return;
                 }
             }
-
             if (txt.equals("")) {
                 textResult.setText("");
                 return;
@@ -160,8 +159,10 @@ public class HelloApplication extends Application {
             RadioButton language = (RadioButton) groupLanguage.getSelectedToggle();
             RadioButton operation = (RadioButton) groupCrypt.getSelectedToggle();
 
-            txt = txt.replace("ё","ѐ");
-            txt = txt.replace("Ё","ѐ");
+            if (txt.contains("ё") || txt.contains("Ё")) {
+                txt = txt.replace("ё", "ѐ");
+                txt = txt.replace("Ё", "ѐ");
+            }
 
             IAlphabet alphabet = null;
             if (language.equals(englishLanguage))
@@ -178,7 +179,12 @@ public class HelloApplication extends Application {
             textResult.setText(result);
 
             if (checkInputFile.isSelected()){
-                inputText(outputFilePath, result);
+                try {
+                    inputText(outputFilePath, result);
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -198,10 +204,8 @@ public class HelloApplication extends Application {
             path = outputFilePath;
 
         File file = new File(path);
-        try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8))
-        {
+        try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8)) {
             out.print(text);
-            System.out.println("Successfully written data to the file");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -212,19 +216,18 @@ public class HelloApplication extends Application {
 
         try {
             File file = new File(path);
-            //создаем объект FileReader для объекта File
             FileReader fr = new FileReader(file);
-            //создаем BufferedReader с существующего FileReader для построчного считывания
             BufferedReader reader = new BufferedReader(fr);
-            // считаем сначала первую строку
+
             String line = reader.readLine();
-            String text = "";
+            StringBuilder text = new StringBuilder();
+
             while (line != null) {
-                text += line + "\n";
+                text.append(line).append("\n");
                 // считываем остальные строки в цикле
                 line = reader.readLine();
             }
-            return text.replace("\n"," ");
+            return text.toString().replace("\n"," ");
         } catch (IOException e) {
             e.printStackTrace();
             return "";
