@@ -133,15 +133,20 @@ public class HelloApplication extends Application {
         //Buttons
         openOutputFile.setOnAction(actionEvent -> {
             if (checkOutputFile.isSelected()) {
-                String path = getPath();
+                File myChoosenFile = getFile();
+                if (myChoosenFile != null) {
+                    String path = myChoosenFile.getPath();
 
-                textField.setText(path);
-                inputFilePath = path;
+                    textField.setText(myChoosenFile.getName());
+                    inputFilePath = path;
+                }
             }
         });
         openInputFile.setOnAction(actionEvent -> {
             if (checkInputFile.isSelected()){
-                outputFilePath = getPath();
+                File myChoosenFile = getFile();
+                if (myChoosenFile != null)
+                    outputFilePath = myChoosenFile.getPath();
             }
         });
         crypt.setOnAction(actionEvent -> {
@@ -194,7 +199,7 @@ public class HelloApplication extends Application {
         });
     }
 
-    protected String getPath(){
+    protected File getFile(){
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Выбрать текст");
         FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Текст", "*.txt");
@@ -202,9 +207,9 @@ public class HelloApplication extends Application {
         File file = fileChooser.showOpenDialog(javaFXC);
 
         if (file != null)
-            return file.getPath();
-        else
-            return inputFilePath;
+            System.out.println("File choose path: " + file.getPath());
+
+        return file;
     }
     private void inputText(String path, String text){
         if (path.isEmpty())
