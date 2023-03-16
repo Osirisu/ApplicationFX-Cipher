@@ -139,6 +139,7 @@ public class HelloApplication extends Application {
 
                     textField.setText(myChoosenFile.getName());
                     inputFilePath = path;
+                    outputFilePath = path;
                 }
             }
         });
@@ -202,7 +203,9 @@ public class HelloApplication extends Application {
     protected File getFile(){
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Выбрать текст");
+
         FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Текст", "*.txt");
+
         fileChooser.getExtensionFilters().add(filter);
         File file = fileChooser.showOpenDialog(javaFXC);
 
@@ -211,11 +214,43 @@ public class HelloApplication extends Application {
 
         return file;
     }
+
+    private String createCopyFile(File myFile){
+        String oldNameFile = myFile.getName();
+        String newNameFile = myFile.getName().replace(".txt","");
+        if (newNameFile.contains("(")){
+            int idx_open = newNameFile.indexOf("(");
+            int idx_clos = newNameFile.lastIndexOf(")");
+            int countCopy = Integer.parseInt(newNameFile.substring(idx_open+1,idx_clos));
+            newNameFile = newNameFile.substring(0, idx_open+1) + (countCopy+1) + newNameFile.substring(idx_clos);
+        }
+        else {
+            newNameFile += "(1)";
+        }
+        newNameFile += ".txt";
+
+        File file = new File(myFile.getPath().replace(oldNameFile, newNameFile));
+        try {
+            if (file.createNewFile()){
+                System.out.println("Created new file! Path: " + file.getPath());
+            }
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+        return file.getPath();
+    }
+
     private void inputText(String path, String text){
         if (path.isEmpty())
             path = outputFilePath;
 
         File file = new File(path);
+        if (inputFilePath.equals(outputFilePath)){
+            file = new File(createCopyFile(file));
+        }
+
         try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8)) {
             out.print(text);
         } catch (IOException e) {
