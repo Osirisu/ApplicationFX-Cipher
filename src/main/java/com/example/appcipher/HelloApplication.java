@@ -17,12 +17,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
@@ -37,10 +32,6 @@ import java.util.Base64;
 public class HelloApplication extends Application {
 
     private FileSupport fileSupport;
-
-    private Stage javaFXC;
-    private String inputFilePath;
-    private String outputFilePath;
 
     private Label nameCipher;
     private Label text;
@@ -83,10 +74,6 @@ public class HelloApplication extends Application {
         stage.show();
 
         fileSupport = new FileSupport(stage);
-
-        inputFilePath = Objects.requireNonNull(getClass().getResource("input.txt")).getPath();
-        outputFilePath = Objects.requireNonNull(getClass().getResource("output.txt")).getPath();
-        javaFXC = stage;
     }
 
     private GridPane createRegistrationFormPane() {
@@ -212,43 +199,44 @@ public class HelloApplication extends Application {
             }
         });
         btnResult.setOnAction(actionEvent -> {
-            String txt = textField.getText();
-            String result = "";
+            String txtToCrypto = getTextToCrypto();
+            if (txtToCrypto == null) return;
 
-            if (checkOutputFile.isSelected()){
-                try {
-                    if (!fileSupport.isInputFileEmpty()) txt = fileSupport.outputText();
-                    else System.err.println("Input file is empty");
-                    //txt = outputText(inputFilePath);
-                }
-                catch (Exception e){
-                    e.printStackTrace();
-                    return;
-                }
-            }
-            if (txt.equals("")) {
-                resultCryptoText.setText("");
-                return;
-            }
-
-            if (txt.contains("ё") || txt.contains("Ё")) {
-                txt = txt.replace("ё", "ѐ");
-                txt = txt.replace("Ё", "ѐ");
-            }
-
-            result = getResultCipher(txt, getAlphabet());
+            String result = getResultCipher(txtToCrypto, getAlphabet());
             resultCryptoText.setText(result);
-
-            if (checkInputFile.isSelected()){
-                try {
-                    fileSupport.inputText(result);
-                    //inputText(outputFilePath, result);
-                }
-                catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
+            if (checkInputFile.isSelected()) insertText(result);
         });
+    }
+
+    private String getTextToCrypto(){
+        String txt = textField.getText();
+        if (checkOutputFile.isSelected()){
+            try {
+                if (!fileSupport.isInputFileEmpty()) txt = fileSupport.outputText();
+                else System.err.println("Input file is empty");
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                return null;
+            }
+        }
+        if (txt.equals("")) {
+            resultCryptoText.setText("");
+            return null;
+        }
+
+        txt = txt.contains("ё") ? txt.replace("ё", "ѐ") : txt;
+        txt = txt.contains("Ё") ? txt.replace("Ё", "ѐ") : txt;
+        return txt;
+    }
+    private void insertText(String result){
+        try {
+            fileSupport.inputText(result);
+            //inputText(outputFilePath, result);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private String getResultCipher(String cipherText, IAlphabet alphabet){
@@ -260,7 +248,6 @@ public class HelloApplication extends Application {
 
         return result;
     }
-
     private IAlphabet getAlphabet(){
         RadioButton language = (RadioButton) groupLanguage.getSelectedToggle();
         IAlphabet alphabet = null;
@@ -274,85 +261,6 @@ public class HelloApplication extends Application {
     private boolean isOperationEncryption(){
         RadioButton operation = (RadioButton) groupCrypt.getSelectedToggle();
         return operation.equals(buttonEncryption);
-    }
-
-    private File getFile(){
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Выбрать текст");
-
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Текст", "*.txt");
-
-        fileChooser.getExtensionFilters().add(filter);
-        File file = fileChooser.showOpenDialog(javaFXC);
-
-        if (file != null)
-            System.out.println("File choose path: " + file.getPath());
-
-        return file;
-    }
-    private String createCopyFile(File myFile){
-        String oldNameFile = myFile.getName();
-        String newNameFile = myFile.getName().replace(".txt","");
-        if (newNameFile.contains("(")){
-            int idx_open = newNameFile.indexOf("(");
-            int idx_clos = newNameFile.lastIndexOf(")");
-            int countCopy = Integer.parseInt(newNameFile.substring(idx_open+1,idx_clos));
-            newNameFile = newNameFile.substring(0, idx_open+1) + (countCopy+1) + newNameFile.substring(idx_clos);
-        }
-        else {
-            newNameFile += "(1)";
-        }
-        newNameFile += ".txt";
-
-        File file = new File(myFile.getPath().replace(oldNameFile, newNameFile));
-        try {
-            if (file.createNewFile()){
-                System.out.println("Created new file! Path: " + file.getPath());
-            }
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-
-        return file.getPath();
-    }
-
-    private void inputText(String path, String text){
-        if (path.isEmpty())
-            path = outputFilePath;
-
-        File file = new File(path);
-        if (inputFilePath.equals(outputFilePath)){
-            file = new File(createCopyFile(file));
-        }
-
-        try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8)) {
-            out.print(text);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private String outputText(String path){
-        if (path.isEmpty())
-            path = inputFilePath;
-
-        try {
-            File file = new File(path);
-            FileReader fr = new FileReader(file);
-            BufferedReader reader = new BufferedReader(fr);
-
-            String line = reader.readLine();
-            StringBuilder text = new StringBuilder();
-
-            while (line != null) {
-                text.append(line).append("\n");
-                line = reader.readLine();
-            }
-            return text.toString().strip();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "";
-        }
     }
 
     // ----------------------------------------------------------------
