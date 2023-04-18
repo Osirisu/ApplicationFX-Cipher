@@ -187,15 +187,15 @@ public class HelloApplication extends Application {
     private void controller(){
         openOutputFile.setOnAction(actionEvent -> {
             if (checkOutputFile.isSelected()) {
-                fileSupport.chooseInputFile();
+                fileSupport.chooseOutputFile();
 
-                if (!fileSupport.getInputFileName().isEmpty())
-                    textField.setText(fileSupport.getInputFileName());
+                if (!fileSupport.getOutputFileName().isEmpty())
+                    textField.setText(fileSupport.getOutputFileName());
             }
         });
         openInputFile.setOnAction(actionEvent -> {
             if (checkInputFile.isSelected()){
-                fileSupport.chooseOutputFile();
+                fileSupport.chooseInputFile();
             }
         });
         btnResult.setOnAction(actionEvent -> {
@@ -212,8 +212,8 @@ public class HelloApplication extends Application {
         String txt = textField.getText();
         if (checkOutputFile.isSelected()){
             try {
-                if (!fileSupport.isInputFileEmpty()) txt = fileSupport.outputText();
-                else System.err.println("Input file is empty");
+                if (!fileSupport.isOutputFileEmpty()) txt = fileSupport.outputText();
+                else System.err.println("Output file is empty");
             }
             catch (Exception e){
                 e.printStackTrace();
@@ -231,8 +231,8 @@ public class HelloApplication extends Application {
     }
     private void insertText(String result){
         try {
-            fileSupport.inputText(result);
-            //inputText(outputFilePath, result);
+            if (!fileSupport.isInputFileEmpty()) fileSupport.inputText(result);
+            else System.err.println("Input file is empty");
         }
         catch (Exception e){
             e.printStackTrace();
