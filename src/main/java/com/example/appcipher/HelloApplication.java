@@ -17,12 +17,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
@@ -37,10 +32,6 @@ import java.util.Base64;
 public class HelloApplication extends Application {
 
     private FileSupport fileSupport;
-
-    private Stage javaFXC;
-    private String inputFilePath;
-    private String outputFilePath;
 
     private Label nameCipher;
     private Label text;
@@ -83,10 +74,6 @@ public class HelloApplication extends Application {
         stage.show();
 
         fileSupport = new FileSupport(stage);
-
-        inputFilePath = Objects.requireNonNull(getClass().getResource("input.txt")).getPath();
-        outputFilePath = Objects.requireNonNull(getClass().getResource("output.txt")).getPath();
-        javaFXC = stage;
     }
 
     private GridPane createRegistrationFormPane() {
@@ -212,43 +199,44 @@ public class HelloApplication extends Application {
             }
         });
         btnResult.setOnAction(actionEvent -> {
-            String txt = textField.getText();
-            String result = "";
+            String txtToCrypto = getTextToCrypto();
+            if (txtToCrypto == null) return;
 
-            if (checkOutputFile.isSelected()){
-                try {
-                    if (!fileSupport.isInputFileEmpty()) txt = fileSupport.outputText();
-                    else System.err.println("Input file is empty");
-                    //txt = outputText(inputFilePath);
-                }
-                catch (Exception e){
-                    e.printStackTrace();
-                    return;
-                }
-            }
-            if (txt.equals("")) {
-                resultCryptoText.setText("");
-                return;
-            }
-
-            if (txt.contains("ё") || txt.contains("Ё")) {
-                txt = txt.replace("ё", "ѐ");
-                txt = txt.replace("Ё", "ѐ");
-            }
-
-            result = getResultCipher(txt, getAlphabet());
+            String result = getResultCipher(txtToCrypto, getAlphabet());
             resultCryptoText.setText(result);
-
-            if (checkInputFile.isSelected()){
-                try {
-                    fileSupport.inputText(result);
-                    //inputText(outputFilePath, result);
-                }
-                catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
+            if (checkInputFile.isSelected()) insertText(result);
         });
+    }
+
+    private String getTextToCrypto(){
+        String txt = textField.getText();
+        if (checkOutputFile.isSelected()){
+            try {
+                if (!fileSupport.isInputFileEmpty()) txt = fileSupport.outputText();
+                else System.err.println("Input file is empty");
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                return null;
+            }
+        }
+        if (txt.equals("")) {
+            resultCryptoText.setText("");
+            return null;
+        }
+
+        txt = txt.contains("ё") ? txt.replace("ё", "ѐ") : txt;
+        txt = txt.contains("Ё") ? txt.replace("Ё", "ѐ") : txt;
+        return txt;
+    }
+    private void insertText(String result){
+        try {
+            fileSupport.inputText(result);
+            //inputText(outputFilePath, result);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private String getResultCipher(String cipherText, IAlphabet alphabet){
@@ -260,7 +248,6 @@ public class HelloApplication extends Application {
 
         return result;
     }
-
     private IAlphabet getAlphabet(){
         RadioButton language = (RadioButton) groupLanguage.getSelectedToggle();
         IAlphabet alphabet = null;
