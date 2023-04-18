@@ -5,6 +5,7 @@ import Cipher.Alphabet.IAlphabet;
 import Cipher.Alphabet.Language;
 import Cipher.Cipher.Cipher;
 import Cipher.Cipher.TrithemiusCipher;
+import File.FileSupport;
 import javafx.application.Application;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -34,6 +35,9 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 public class HelloApplication extends Application {
+
+    private FileSupport fileSupport;
+
     private Stage javaFXC;
     private String inputFilePath;
     private String outputFilePath;
@@ -69,6 +73,7 @@ public class HelloApplication extends Application {
     public void start(Stage stage) {
         GridPane gridPane = createRegistrationFormPane();
         createUIControls(gridPane);
+        controller();
 
         Scene scene = new Scene(gridPane, 800, 420);
         stage.setResizable(false);
@@ -76,6 +81,8 @@ public class HelloApplication extends Application {
         stage.setTitle("Cipher");
         stage.setScene(scene);
         stage.show();
+
+        fileSupport = new FileSupport(stage);
 
         inputFilePath = Objects.requireNonNull(getClass().getResource("input.txt")).getPath();
         outputFilePath = Objects.requireNonNull(getClass().getResource("output.txt")).getPath();
@@ -193,21 +200,15 @@ public class HelloApplication extends Application {
     private void controller(){
         openOutputFile.setOnAction(actionEvent -> {
             if (checkOutputFile.isSelected()) {
-                File myChoosenFile = getFile();
-                if (myChoosenFile != null) {
-                    String path = myChoosenFile.getPath();
+                fileSupport.chooseInputFile();
 
-                    textField.setText(myChoosenFile.getName());
-                    inputFilePath = path;
-                    outputFilePath = path;
-                }
+                if (!fileSupport.getInputFileName().isEmpty())
+                    textField.setText(fileSupport.getInputFileName());
             }
         });
         openInputFile.setOnAction(actionEvent -> {
             if (checkInputFile.isSelected()){
-                File myChoosenFile = getFile();
-                if (myChoosenFile != null)
-                    outputFilePath = myChoosenFile.getPath();
+                fileSupport.chooseOutputFile();
             }
         });
         btnResult.setOnAction(actionEvent -> {
@@ -216,8 +217,11 @@ public class HelloApplication extends Application {
 
             if (checkOutputFile.isSelected()){
                 try {
-                    txt = outputText(inputFilePath);
-                }catch (Exception e){
+                    if (!fileSupport.isInputFileEmpty()) txt = fileSupport.outputText();
+                    else System.err.println("Input file is empty");
+                    //txt = outputText(inputFilePath);
+                }
+                catch (Exception e){
                     e.printStackTrace();
                     return;
                 }
@@ -227,37 +231,49 @@ public class HelloApplication extends Application {
                 return;
             }
 
-            RadioButton language = (RadioButton) groupLanguage.getSelectedToggle();
-            RadioButton operation = (RadioButton) groupCrypt.getSelectedToggle();
-
             if (txt.contains("ё") || txt.contains("Ё")) {
                 txt = txt.replace("ё", "ѐ");
                 txt = txt.replace("Ё", "ѐ");
             }
 
-            IAlphabet alphabet = null;
-            if (language.equals(englishLanguage))
-                alphabet = new Alphabet(Language.ENGLISH);
-            if (language.equals(russianLanguage))
-                alphabet = new Alphabet(Language.RUSSIAN);
-
-            Cipher cipher = new TrithemiusCipher(txt, alphabet);
-            if (operation.equals(buttonEncryption))
-                result = cipher.encryption();
-            if (operation.equals(buttonDecryption))
-                result = cipher.decryption();
-
+            result = getResultCipher(txt, getAlphabet());
             resultCryptoText.setText(result);
 
             if (checkInputFile.isSelected()){
                 try {
-                    inputText(outputFilePath, result);
+                    fileSupport.inputText(result);
+                    //inputText(outputFilePath, result);
                 }
                 catch (Exception e){
                     e.printStackTrace();
                 }
             }
         });
+    }
+
+    private String getResultCipher(String cipherText, IAlphabet alphabet){
+        String result = "";
+
+        Cipher cipher = new TrithemiusCipher(cipherText, alphabet);
+        if (isOperationEncryption()) result = cipher.encryption();
+        else result = cipher.decryption();
+
+        return result;
+    }
+
+    private IAlphabet getAlphabet(){
+        RadioButton language = (RadioButton) groupLanguage.getSelectedToggle();
+        IAlphabet alphabet = null;
+        if (language.equals(englishLanguage))
+            alphabet = new Alphabet(Language.ENGLISH);
+        if (language.equals(russianLanguage))
+            alphabet = new Alphabet(Language.RUSSIAN);
+
+        return alphabet;
+    }
+    private boolean isOperationEncryption(){
+        RadioButton operation = (RadioButton) groupCrypt.getSelectedToggle();
+        return operation.equals(buttonEncryption);
     }
 
     private File getFile(){
