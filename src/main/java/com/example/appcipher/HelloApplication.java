@@ -21,6 +21,7 @@ import javafx.stage.Stage;
 
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 
 import java.io.UnsupportedEncodingException;
@@ -62,6 +63,8 @@ public class HelloApplication extends Application {
     }
     @Override
     public void start(Stage stage) {
+        Security.addProvider(new BouncyCastleProvider());
+
         GridPane gridPane = createRegistrationFormPane();
         createUIControls(gridPane);
         controller();
@@ -187,15 +190,20 @@ public class HelloApplication extends Application {
     private void controller(){
         openOutputFile.setOnAction(actionEvent -> {
             if (checkOutputFile.isSelected()) {
-                fileSupport.chooseInputFile();
+                fileSupport.chooseOutputFile();
 
-                if (!fileSupport.getInputFileName().isEmpty())
-                    textField.setText(fileSupport.getInputFileName());
+                if (!fileSupport.isOutputFileEmpty())
+                    textField.setText(fileSupport.getOutputFileName());
+                else
+                    System.err.println("No output file");
             }
         });
         openInputFile.setOnAction(actionEvent -> {
             if (checkInputFile.isSelected()){
-                fileSupport.chooseOutputFile();
+                fileSupport.chooseInputFile();
+
+                if (fileSupport.isInputFileEmpty())
+                    System.err.println("No input file");
             }
         });
         btnResult.setOnAction(actionEvent -> {
@@ -205,6 +213,14 @@ public class HelloApplication extends Application {
             String result = getResultCipher(txtToCrypto, getAlphabet());
             resultCryptoText.setText(result);
             if (checkInputFile.isSelected()) insertText(result);
+
+            try {
+                String integrityTxt = isOperationEncryption() ? txtToCrypto : result;
+                integrityCheck(integrityTxt);
+            } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchProviderException |
+                     UnsupportedEncodingException | SignatureException | InvalidKeyException | InvalidKeySpecException e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 
@@ -212,16 +228,17 @@ public class HelloApplication extends Application {
         String txt = textField.getText();
         if (checkOutputFile.isSelected()){
             try {
-                if (!fileSupport.isInputFileEmpty()) txt = fileSupport.outputText();
-                else System.err.println("Input file is empty");
+                if (!fileSupport.isOutputFileEmpty()) txt = fileSupport.outputText();
+                else System.err.println("Output file is empty");
             }
             catch (Exception e){
                 e.printStackTrace();
                 return null;
             }
         }
-        if (txt.equals("")) {
+        if (txt.isEmpty()) {
             resultCryptoText.setText("");
+            System.err.println("Text is empty");
             return null;
         }
 
@@ -231,8 +248,8 @@ public class HelloApplication extends Application {
     }
     private void insertText(String result){
         try {
-            fileSupport.inputText(result);
-            //inputText(outputFilePath, result);
+            if (!fileSupport.isInputFileEmpty()) fileSupport.inputText(result);
+            else System.err.println("Input file is empty");
         }
         catch (Exception e){
             e.printStackTrace();
@@ -263,6 +280,40 @@ public class HelloApplication extends Application {
         return operation.equals(buttonEncryption);
     }
 
+    private void integrityCheck(final String plaintext)
+            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException,
+            UnsupportedEncodingException, SignatureException, InvalidKeyException, InvalidKeySpecException {
+        if (!isIntegrityCheck()) {
+            return;
+        }
+
+        String publicKeyString = "";
+        String signatureString = "";
+        if (isOperationEncryption()) {
+            final KeyPair keys = GenerateKeys();
+            final byte[] signature = GenerateSignature(plaintext, keys.getPrivate());
+
+            publicKeyString = getStringFromPublicKey(keys.getPublic());
+            signatureString = bytearrayToString(signature);
+
+            publicKeyText.setText(publicKeyString);
+            signatureText.setText(signatureString);
+        }
+        else {
+            publicKeyString = publicKeyText.getText();
+            signatureString = signatureText.getText();
+
+            final PublicKey public_key = getPublicKeyFromSting(publicKeyString);
+            final byte[] newSignature = stringToByteArray(signatureString);
+
+            boolean isValidated = ValidateSignature(plaintext, public_key, newSignature);
+            resultIntegrityText.setText(isValidated ? "true" : "false");
+        }
+    }
+    private boolean isIntegrityCheck(){
+        return integrityCheck.isSelected();
+    }
+
     // ----------------------------------------------------------------
     // Bounty Castle methods
 
@@ -291,11 +342,11 @@ public class HelloApplication extends Application {
     {
         //  Other named curves can be found in http://www.bouncycastle.org/wiki/display/JA1/Supported+Curves+%28ECDSA+and+ECGOST%29
         ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("B-571");
-        KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", "BC");
-        g.initialize(ecSpec, new SecureRandom());
-        return g.generateKeyPair();
+        KeyPairGenerator keys = KeyPairGenerator.getInstance("ECDSA", "BC");
+        keys.initialize(ecSpec, new SecureRandom());
+        return keys.generateKeyPair();
     }
-    // My methods
+    // My methods Bounty Castle
 
     private static String getStringFromPublicKey(KeyPair key){
         return Base64.getEncoder().encodeToString(key.getPublic().getEncoded());

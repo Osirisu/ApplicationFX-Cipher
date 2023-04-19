@@ -28,7 +28,7 @@ public class FileSupport {
     public String getInputFileName(){
         return inputFile.getName();
     }
-    public String getOutputFileName(Stage stage){
+    public String getOutputFileName(){
         return outputFile.getName();
     }
 
